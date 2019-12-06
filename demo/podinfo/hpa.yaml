@@ -1,0 +1,17 @@
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+  namespace: demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Pods
+      pods:
+        metricName: http_requests_per_second
+        targetAverageValue: 10
