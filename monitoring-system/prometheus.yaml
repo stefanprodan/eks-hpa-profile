@@ -1,0 +1,14 @@
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: prometheus
+  namespace: monitoring-system
+spec:
+  releaseName: prometheus
+  chart:
+    git: https://github.com/aws/eks-charts
+    ref: master
+    path: stable/appmesh-prometheus
+  values:
+    retention: 2h
+    fullnameOverride: prometheus
