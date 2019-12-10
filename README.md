@@ -1,7 +1,7 @@
 # eks-hpa-profile
 
 Autoscaling is an approach to automatically scale up or down workloads based on the resource usage.
-By default the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
+In Kubernetes the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
 Starting with Kubernetes 1.7, an aggregation layer was introduced that allows 3rd party applications
 to extend the Kubernetes API by registering themselves as API add-ons.
 Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
@@ -27,6 +27,8 @@ For Windows you can use [Chocolatey](http://chocolatey.org):
 choco install eksctl
 choco install fluxctl
 ```
+
+For Linux you can download the [eksctl](https://github.com/weaveworks/eksctl) and [fluxctl](https://github.com/fluxcd/flux/releases) binaries from GitHub.
 
 ### Create an EKS cluster
 
@@ -289,3 +291,53 @@ You may have noticed that the autoscaler doesn't react immediately to usage spik
 By default the metrics sync happens once every 30 seconds and scaling up/down can only happen
 if there was no rescaling within the last 3-5 minutes.
 In this way, the HPA prevents rapid execution of conflicting decisions.
+
+### Configure autoscaling based on CPU usage
+
+For workloads that aren't instrumented with Prometheus, you can use the Kubernetes
+[metrics server](https://github.com/stefanprodan/eks-hpa-profile/blob/master/monitoring-system/metrics-server.yaml)
+and configure auto-scaling based on CPU and/or memory usage.
+
+Update the HPA manifest by replacing the HTTP metric with CPU average utilization:
+
+```sh
+cat << EOF | tee base/demo/podinfo/hpa.yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+  namespace: demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+        resource:
+          name: cpu
+          targetAverageUtilization: 90
+EOF
+```
+
+Apply changes via git:
+
+```sh
+git add -A && \
+git commit -m "cpu hpa" && \
+git push origin master && \
+fluxctl sync --k8s-fwd-ns flux
+```
+
+Run a load test to increase CPU usage above 90% to trigger the HPA:
+
+```sh
+hey -z 10m -c 5 -q 5 -m POST -d 'test' -disable-keepalive http://podinfo.demo/token
+```
+
+The Kubernetes Metrics Server is a cluster-wide aggregator of resource usage data,
+it collects CPU and memory usage for nodes and pods by pooling data from the `kubernetes.summary_api`.
+The summary API is a memory-efficient API for passing data from Kubelet to the metrics server.
+
