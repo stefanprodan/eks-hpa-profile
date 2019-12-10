@@ -6,7 +6,10 @@ Starting with Kubernetes 1.7, an aggregation layer was introduced that allows 3r
 to extend the Kubernetes API by registering themselves as API add-ons.
 Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
 
-What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus.
+What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus to automatically scale
+pods running as Fargate tasks on EKS.
+
+![](docs/fargate-eks-hpa.png)
 
 ### Prerequisites
 

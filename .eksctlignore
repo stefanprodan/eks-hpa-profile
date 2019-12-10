@@ -1,0 +1,4 @@
+# exclude CI
+.circleci/
+.github/
+docs/
