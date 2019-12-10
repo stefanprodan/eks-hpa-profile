@@ -1,6 +1,12 @@
 # eks-hpa-profile
 
-An [eksctl](https://eksctl.io) GitOps profile for horizontal pod autoscaling with Prometheus metrics.
+Autoscaling is an approach to automatically scale up or down workloads based on the resource usage.
+By default the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
+Starting with Kubernetes 1.7, an aggregation layer was introduced that allows 3rd party applications
+to extend the Kubernetes API by registering themselves as API add-ons.
+Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
+
+What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus.
 
 ### Prerequisites
 
