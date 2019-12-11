@@ -1,5 +1,7 @@
 # eks-hpa-profile
 
+**Autoscaling Fargate tasks on Amazon EKS with custom metrics**
+
 Autoscaling is an approach to automatically scale up or down workloads based on the resource usage.
 In Kubernetes the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
 Starting with Kubernetes 1.7, an aggregation layer was introduced that allows 3rd party applications
@@ -7,7 +9,7 @@ to extend the Kubernetes API by registering themselves as API add-ons.
 Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
 
 What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus to automatically scale
-pods running as Fargate tasks on EKS.
+pods running as Fargate tasks on EKS. 
 
 ![](docs/fargate-eks-hpa.png)
 
@@ -28,7 +30,8 @@ choco install eksctl
 choco install fluxctl
 ```
 
-For Linux you can download the [eksctl](https://github.com/weaveworks/eksctl) and [fluxctl](https://github.com/fluxcd/flux/releases) binaries from GitHub.
+For Linux you can download the [eksctl](https://github.com/weaveworks/eksctl)
+and [fluxctl](https://github.com/fluxcd/flux/releases) binaries from GitHub.
 
 ### Create an EKS cluster
 
@@ -68,6 +71,9 @@ You'll use Fargate for the demo application [podinfo](https://github.com/stefanp
 note that only the pods deployed in the `demo` namespace with a `scheduler: fargate` label will be running as Fargate tasks.
 
 ### Create a GitHub repository
+
+To configure HPA for Fargate you'll be using an eksctl GitOps [profile](https://eksctl.io/gitops-quickstart/setup-gitops/). 
+A Profile allows you to create a specific Kubernetes application platform tailored for a specific use case.
 
 Create a GitHub [repository](https://github.com/new) and clone it locally.
 Replace `GH_USER/GH_REPO` value with your GitHub username and new repo.
