@@ -347,3 +347,71 @@ The Kubernetes Metrics Server is a cluster-wide aggregator of resource usage dat
 it collects CPU and memory usage for nodes and pods by pooling data from the `kubernetes.summary_api`.
 The summary API is a memory-efficient API for passing data from Kubelet to the metrics server.
 
+### Configure autoscaling based on App Mesh traffic
+
+One of the advantages of using a service mesh like App Mesh is the builtin monitoring capability.
+You don’t have to instrument your web apps in order to monitor the L7 traffic.
+
+The Envoy sidecar used by App Mesh exposes a counter `envoy_cluster_upstream_rq`, you can configure the
+[Prometheus adapter](https://github.com/stefanprodan/eks-hpa-profile/blob/master/monitoring-system/prometheus-adapter.yaml)
+to transform this metric into req/sec rate with:
+
+```yaml
+apiVersion: helm.fluxcd.io/v1
+kind: HelmRelease
+metadata:
+  name: prometheus-adapter
+  namespace: monitoring-system
+spec:
+  releaseName: prometheus-adapter
+  chart:
+    repository: https://kubernetes-charts.storage.googleapis.com/
+    name: prometheus-adapter
+    version: 1.4.0
+  values:
+    prometheus:
+      url: http://prometheus.monitoring-system
+      port: 9090
+    rules:
+      default: false
+      custom:
+        - seriesQuery: 'envoy_cluster_upstream_rq{kubernetes_namespace!="",kubernetes_pod_name!=""}'
+          resources:
+            overrides:
+              kubernetes_namespace: {resource: "namespace"}
+              kubernetes_pod_name: {resource: "pod"}
+          name:
+            matches: "envoy_cluster_upstream_rq"
+            as: "appmesh_requests_per_second"
+          metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[1m])) by (<<.GroupBy>>)'
+```
+
+Now you can use the `appmesh_requests_per_second` metric in the HPA definition:
+
+```yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+  namespace: demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Pods
+      pods:
+        metricName: appmesh_requests_per_second
+        targetAverageValue: 10
+```
+
+### Wrapping up
+
+Not all systems can meet their SLAs by relying on CPU/memory usage metrics alone,
+most web and mobile backends require autoscaling based on requests per second to handle any traffic bursts.
+For ETL apps, auto scaling could be triggered by the job queue length exceeding some threshold and so on.
+By instrumenting your applications with Prometheus and exposing the right metrics for
+autoscaling you can fine tune your apps to better handle bursts and ensure high availability.

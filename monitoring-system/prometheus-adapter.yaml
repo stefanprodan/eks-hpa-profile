@@ -25,3 +25,12 @@ spec:
             matches: "^(.*)_total"
             as: "${1}_per_second"
           metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[1m])) by (<<.GroupBy>>)'
+        - seriesQuery: 'envoy_cluster_upstream_rq{kubernetes_namespace!="",kubernetes_pod_name!=""}'
+          resources:
+            overrides:
+              kubernetes_namespace: {resource: "namespace"}
+              kubernetes_pod_name: {resource: "pod"}
+          name:
+            matches: "envoy_cluster_upstream_rq"
+            as: "appmesh_requests_per_second"
+          metricsQuery: 'sum(rate(<<.Series>>{<<.LabelMatchers>>}[1m])) by (<<.GroupBy>>)'
