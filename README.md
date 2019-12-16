@@ -1,6 +1,6 @@
 # eks-hpa-profile
 
-**Autoscaling Fargate tasks on Amazon EKS with custom metrics**
+**Autoscaling EKS on Fargate with custom metrics**
 
 Autoscaling is an approach to automatically scale up or down workloads based on the resource usage.
 In Kubernetes the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
@@ -9,7 +9,7 @@ to extend the Kubernetes API by registering themselves as API add-ons.
 Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
 
 What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus to automatically scale
-pods running as Fargate tasks on EKS. 
+pods running on EKS on Fargate. 
 
 ![](docs/fargate-eks-hpa.png)
 
@@ -64,11 +64,13 @@ fargateProfiles:
 EOF
 ```
 
-You'll use the managed nodes for cluster add-ons(CoreDNS, KubeProxy) and for the horizontal pod autoscaler metrics
-add-ons(Metrics server, Prometheus, Prometheus metrics adapter).
+You'll use the managed nodes for cluster add-ons(CoreDNS, KubeProxy) and for the HPA metrics add-ons:
+* [Prometheus](https://github.com/stefanprodan/eks-hpa-profile/blob/master/monitoring-system/prometheus.yaml) - scrapes pods and stores metrics
+* [Prometheus metrics adapter](https://github.com/stefanprodan/eks-hpa-profile/blob/master/monitoring-system/prometheus-adapter.yaml) - queries Prometheus and exposes metrics for the Kubernetes custom metrics API
+* [Metrics server](https://github.com/stefanprodan/eks-hpa-profile/blob/master/monitoring-system/metrics-server.yaml) - collects pods CPU and memory usage and exposes metrics for the Kubernetes resource metrics API
 
 You'll use Fargate for the demo application [podinfo](https://github.com/stefanprodan/eks-hpa-profile/tree/master/demo/podinfo),
-note that only the pods deployed in the `demo` namespace with a `scheduler: fargate` label will be running as Fargate tasks.
+note that only the pods deployed in the `demo` namespace with a `scheduler: fargate` label will be running on Fargate.
 
 ### Create a GitHub repository
 
@@ -157,10 +159,9 @@ prometheus-adapter   prometheus-adapter   DEPLOYED
 
 ### Install podinfo
 
-You'll use a Go web app named [podinfo](https://github.com/stefanprodan/podinfo) to test
-the Horizontal Pod Autoscaler (HPA).
+You'll use a Go web app named [podinfo](https://github.com/stefanprodan/podinfo) to try out HPA.
 The app is instrumented with Prometheus and exposes the `http_requests_total` [counter](https://prometheus.io/docs/concepts/metric_types/#counter).
-The HPA controller will scale the Fargate tasks based on the number of requests per second.
+The HPA controller will scale the pods running on Fargate based on the number of requests per second.
 
 Install podinfo by setting `fluxcd.io/ignore` to `false` in base/demo/namespace.yaml:
 
@@ -248,6 +249,9 @@ spec:
         metricName: http_requests_per_second
         targetAverageValue: 10
 ```
+
+Note that the podinfo [deployment manifest](https://github.com/stefanprodan/eks-hpa-profile/blob/master/demo/podinfo/deployment.yaml)
+has no replicas defined in `deployment.spec.replicas`, the HPA controller updates the number of replicas based on the metric average value.
 
 Once the metric is available to the metrics API, the HPA controller will display the current value:
 
