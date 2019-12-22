@@ -1,37 +1,9 @@
 # eks-hpa-profile
 
-**Autoscaling EKS on Fargate with custom metrics**
-
-Autoscaling is an approach to automatically scale up or down workloads based on the resource usage.
-In Kubernetes the Horizontal Pod Autoscaler (HPA) can scale pods based on observed CPU utilization and memory usage.
-Starting with Kubernetes 1.7, an aggregation layer was introduced that allows 3rd party applications
-to extend the Kubernetes API by registering themselves as API add-ons.
-Such an add-on can implement the Custom Metrics API and enable HPA access to arbitrary metrics.
-
-What follows is a step-by-step guide on configuring HPA with metrics provided by Prometheus to automatically scale
-pods running on EKS on Fargate. 
+This repo is an [eksctl GitOps profile](https://eksctl.io/usage/experimental/gitops-flux/)
+for configuring HPA with metrics provided by Prometheus to automatically scale pods running on EKS on Fargate. 
 
 ![](docs/fargate-eks-hpa.png)
-
-### Prerequisites
-
-Install eksctl and fluxctl for macOS with [Homebrew](https://brew.sh/):
-
-```sh
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-brew install fluxctl
-```
-
-For Windows you can use [Chocolatey](http://chocolatey.org):
-
-```sh
-choco install eksctl
-choco install fluxctl
-```
-
-For Linux you can download the [eksctl](https://github.com/weaveworks/eksctl)
-and [fluxctl](https://github.com/fluxcd/flux/releases) binaries from GitHub.
 
 ### Create an EKS cluster
 
@@ -135,6 +107,13 @@ Sync your local repository with:
 
 ```sh
 git pull origin master
+```
+
+Install [fluxctl](https://github.com/fluxcd/flux/releases):
+
+```sh
+curl -sL https://fluxcd.io/install | sh
+export PATH="$PATH:$HOME/.fluxcd/bin"
 ```
 
 Run the fluxctl sync command to apply the manifests on your cluster:
@@ -412,10 +391,3 @@ spec:
         targetAverageValue: 10
 ```
 
-### Wrapping up
-
-Not all systems can meet their SLAs by relying on CPU/memory usage metrics alone,
-most web and mobile backends require autoscaling based on requests per second to handle any traffic bursts.
-For ETL apps, auto scaling could be triggered by the job queue length exceeding some threshold and so on.
-By instrumenting your applications with Prometheus and exposing the right metrics for
-autoscaling you can fine tune your apps to better handle bursts and ensure high availability.
