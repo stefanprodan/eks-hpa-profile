@@ -45,6 +45,9 @@ spec:
         - --grpc-port=9999
         - --grpc-service-name=podinfo
         - --level=info
+        env:
+        - name: PODINFO_UI_COLOR
+          value: "#34577c"
         livenessProbe:
           exec:
             command:
