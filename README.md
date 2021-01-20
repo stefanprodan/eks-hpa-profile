@@ -92,7 +92,7 @@ Run the eksctl profile command:
 
 ```sh
 eksctl enable profile \
---name=https://github.com/stefanprodan/eks-hpa-profile \
+--profile-source=https://github.com/stefanprodan/eks-hpa-profile \
 --cluster=eks-fargate-hpa \
 --region=eu-west-1 \
 --git-url=git@github.com:${GH_USER}/${GH_REPO} \
