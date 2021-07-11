@@ -1,6 +1,6 @@
 # eks-hpa-profile
 
-This repo is an [eksctl GitOps profile](https://eksctl.io/usage/experimental/gitops-flux/)
+This repo is an [eksctl GitOps profile](https://eksctl.io/usage/gitops/)
 for configuring HPA with metrics provided by Prometheus to automatically scale pods running on EKS on Fargate. 
 
 ![](docs/fargate-eks-hpa.png)
